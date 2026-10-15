@@ -25,50 +25,50 @@ dotenv.config({
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Connect to MongoDB (Atlas with automatic local in-memory fallback for instant dev/testing)
+// Use the configured MongoDB database, falling back to an in-memory database in development.
 async function connectDatabase() {
     if (process.env.TEST_MODE || process.env.NODE_ENV === "test" || process.argv[1]?.includes("test")) return;
 
-    let connected = false;
-    if (process.env.dbURL && !process.env.dbURL.includes("cluster0.mongodb.net")) {
+    if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+        throw new Error("Set JWT_SECRET in the production environment.");
+    }
+
+    if (process.env.dbURL) {
         try {
             await mongoose.connect(process.env.dbURL, { serverSelectionTimeoutMS: 5000 });
-            console.log("✅ DB Connected successfully to MongoDB Atlas");
-            connected = true;
+            console.log("✅ DB Connected successfully");
             await seedDatabase();
+            return;
         } catch (err) {
-            console.warn("MongoDB Atlas connection notice:", err.message);
+            if (process.env.NODE_ENV === "production") throw err;
+            console.warn("MongoDB connection notice:", err.message);
         }
     }
 
-    if (!connected) {
-        try {
-            console.log("🔄 Starting local developer database...");
-            const mongod = await MongoMemoryServer.create();
-            await mongoose.connect(mongod.getUri());
-            console.log("✅ Developer Database online at", mongod.getUri());
-            await seedDatabase();
-        } catch (memErr) {
-            console.error("Local DB startup error:", memErr.message);
-        }
+    if (process.env.NODE_ENV === "production") {
+        throw new Error("Set dbURL to a MongoDB connection string in production.");
     }
+
+    console.log("🔄 Starting local developer database...");
+    const mongod = await MongoMemoryServer.create();
+    await mongoose.connect(mongod.getUri());
+    console.log("✅ Developer Database online at", mongod.getUri());
+    await seedDatabase();
 }
-
-connectDatabase();
 
 // Middlewares
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
     process.env.FRONTEND_URL
-].filter(Boolean);
+].filter(Boolean).map((origin) => origin.toLowerCase());
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://localhost:")) {
+        if (!origin || allowedOrigins.includes(origin.toLowerCase()) || /^http:\/\/localhost:\d+$/.test(origin)) {
             callback(null, true);
         } else {
-            callback(null, true);
+            callback(new Error("Origin not allowed by CORS"));
         }
     },
     credentials: true
@@ -94,8 +94,13 @@ app.use(errorMiddleware);
 
 let server;
 if (process.env.NODE_ENV !== "test" && !process.argv[1]?.includes("test")) {
-    server = app.listen(port, "0.0.0.0", () => {
-        console.log(`🛍️ ShopKart Backend Server Started at port ${port}`);
+    connectDatabase().then(() => {
+        server = app.listen(port, "0.0.0.0", () => {
+            console.log(`🛍️ ShopKart Backend Server Started at port ${port}`);
+        });
+    }).catch((err) => {
+        console.error("Database startup error:", err.message);
+        process.exitCode = 1;
     });
 }
 

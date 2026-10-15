@@ -2,10 +2,11 @@ import Customer from "../models/customer.model.js";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 
+const secureCookies = process.env.NODE_ENV === "production";
 const cookieOptions = {
     httpOnly: true,
-    sameSite: "lax",
-    secure: false, // Set to true if running over HTTPS in production
+    sameSite: secureCookies ? "none" : "lax",
+    secure: secureCookies,
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 
@@ -123,8 +124,8 @@ export const getMe = async (req, res) => {
 export const logoutCustomer = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        sameSite: "lax",
-        secure: false
+        sameSite: cookieOptions.sameSite,
+        secure: cookieOptions.secure
     });
 
     return res.status(200).json({

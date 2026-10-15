@@ -45,6 +45,7 @@ jobs:
         working-directory: frontend
         env:
           VITE_BASE_PATH: /Shopkart_Mern-Project/
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: npm run build
 
       - name: Upload frontend build

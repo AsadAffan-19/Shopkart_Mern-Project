@@ -77,11 +77,16 @@ The GitHub Actions workflow builds and publishes the frontend whenever changes a
 
 `https://AsadAffan-19.github.io/Shopkart_Mern-Project/`
 
-GitHub Pages only hosts static frontend files; it does not run the Express backend or MongoDB. Features that require the API, including login, product data, cart, wishlist, and checkout, need the backend and database hosted separately.
+GitHub Pages only hosts static frontend files; it does not run the Express backend or MongoDB. To enable login and other API features:
+
+1. Host the backend and a MongoDB database (for example, with Render and MongoDB Atlas). Configure the backend service to use `backend` as its root directory, `npm install` as its build command, and `npm start` as its start command.
+2. Set `NODE_ENV=production`, `dbURL`, `JWT_SECRET`, and `FRONTEND_URL=https://AsadAffan-19.github.io` in the backend service's environment settings. `JWT_SECRET` should be a private random value; never commit it.
+3. In GitHub, open **Settings → Secrets and variables → Actions → Variables**, create a repository variable named `VITE_API_URL`, and set its value to the deployed backend's base URL (for example, `https://your-service.onrender.com`, with no trailing slash).
+4. Push a commit or manually rerun the **Deploy frontend to GitHub Pages** workflow so it rebuilds the frontend with the API URL.
 
 ## Frontend
 
 The frontend provides login and registration, a home page, product browsing and details, wishlist and cart pages, checkout, payment confirmation, and order history. React context providers manage authentication, cart, and wishlist state; protected routes restrict account-specific pages to signed-in customers.
 
-The frontend API client currently targets `http://localhost:8080`.
+For local development the API client defaults to `http://localhost:8080`; production builds use the `VITE_API_URL` GitHub Actions variable.
 # Shopkart_Mern-Project
