@@ -71,6 +71,14 @@ The API is mounted at the root URL:
 
 Wishlist, cart, and order routes require authentication. Customer registration and login are public; retrieving or changing the current customer's account requires authentication. Product routes are public.
 
+## Deploy the frontend to GitHub Pages
+
+The GitHub Actions workflow builds and publishes the frontend whenever changes are pushed to `main`. In the repository settings, open **Settings → Pages** and select **GitHub Actions** as the build and deployment source. After the workflow completes, the site will be available at:
+
+`https://AsadAffan-19.github.io/Shopkart_Mern-Project/`
+
+GitHub Pages only hosts static frontend files; it does not run the Express backend or MongoDB. Features that require the API, including login, product data, cart, wishlist, and checkout, need the backend and database hosted separately.
+
 ## Frontend
 
 The frontend provides login and registration, a home page, product browsing and details, wishlist and cart pages, checkout, payment confirmation, and order history. React context providers manage authentication, cart, and wishlist state; protected routes restrict account-specific pages to signed-in customers.

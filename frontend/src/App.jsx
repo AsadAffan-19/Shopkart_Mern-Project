@@ -21,7 +21,7 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <Routes>
               {/* Public Auth Routes (Lab 02) */}
               <Route
